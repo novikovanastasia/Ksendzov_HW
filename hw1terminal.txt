@@ -1,0 +1,66 @@
+1) Посмотреть где я
+ pwd
+2) Создать папку
+ mkdir homework
+3) Зайти в папку 
+cd homework
+4) Создать 3 папки
+ mkdir dir_1 dir_2 dir_3
+5) Зайти в любоую папку
+ cd dir_1
+6) Создать 5 файлов (3 txt, 2 json)
+ touch file1.txt file2.txt file3.txt file4.json filevi5.json
+7) Создать 3 папки
+ mkdir dir_4 dir_5 dir_6
+8. Вывести список содержимого папки 
+ls -la
+9) + Открыть любой txt файл
+ vim file1.txt
+10) + написать туда что-нибудь, любой текст
+нажать i (insert), напечатать любой текст 
+
+11) + сохранить и выйти.
+нажать кнопку esc и ввести ":wq" без кавычек, далее нажать enter
+12) Выйти из папки на уровень выше
+ cd ..
+13) переместить любые 2 файла, которые вы создали, в любую другую папку. 
+ mv file1.txt file2.txt dir_4
+
+14) скопировать любые 2 файла, которые вы создали, в любую другую папку.
+ cp file3.txt file4.json dir_4
+
+15) Найти файл по имени
+    find -name file4.json
+
+16) просмотреть содержимое в реальном времени (команда grep) изучите как она работает grep "вам"
+tail -f file22.txt
+
+17) вывести несколько первых строк из текстового файла
+ head -n2 file1.txt
+
+18) вывести несколько последних строк из текстового файла
+ tail -n3 file1.txt
+
+19) просмотреть содержимое длинного файла (команда less) изучите как она работает. 
+less file22.txt , нажать q для выхода
+
+20) вывести дату и время 
+date
+
+*
+ Отправить http запрос на сервер:
+   curl "http://162.55.220.72:5005/terminal-hw-request"
+
+скрипт: 
+
+#!/bin/bash
+mkdir 28_group
+cd 28_group
+mkdir homework
+cd homework
+mkdir dir_1 dir_2 dir_3 
+cd dir_1
+touch file1.txt file2.txt file3.txt file4.json file5.json
+mkdir dir_4 dir_5 3dir_6
+ls -la
+ mv file1.txt file2.txt dir_4
