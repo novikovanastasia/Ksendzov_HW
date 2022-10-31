@@ -192,6 +192,225 @@ WHERE price < ANY(
         GROUP BY author 
       );
       
+//26.
+
+Посчитать сколько и каких экземпляров книг нужно заказать поставщикам, чтобы на складе стало одинаковое количество экземпляров каждой книги, равное значению самого большего количества экземпляров одной книги на складе. Вывести название книги, ее автора, текущее количество экземпляров на складе и количество заказываемых экземпляров книг. Последнему столбцу присвоить имя Заказ. В результат не включать книги, которые заказывать не нужно.
+SELECT title, author, amount, 
+(SELECT MAX(amount) FROM book)-amount AS Заказ
+FROM book 
+WHERE amount NOT IN ( SELECT MAX( amount ) FROM book );
+
+//27. Определить стоимость покупки, если купить самую дешевую книгу каждого автора.
+SELECT SUM(price) AS покупки 
+ FROM book
+ WHERE price IN (SELECT MIN(PRICE) 
+        FROM book 
+        GROUP BY author)
+
+
+ //28.Создать таблицу поставка (supply), которая имеет ту же структуру, что и таблиц book.
+ CREATE TABLE supply (
+    supply_id INT PRIMARY KEY AUTO_INCREMENT, 
+    title VARCHAR(50),
+    author VARCHAR(30),
+    price DECIMAL(8,2),
+    amount INT
+);
+
+ //29. Занести данные в таблицу
+ INSERT INTO supply (title, author, price, amount)
+ VALUES ( 'Лирика','Пастернак Б.Л.',518.99, 2),
+        ('Черный человек', 'Есенин С.А.',570.20, 6),
+        ('Белая гвардия', 'Булгаков М.А.', 540.50, 7),
+        ('Идиот', 'Достоевский Ф.М.', 360.80,3);
+
+//30. Занести из таблицы supply в таблицу book только те книги, авторов которых нет в  book.
+INSERT INTO book (author,title,price, amount)
+SELECT title, author, price, amount
+FROM supply 
+WHERE author NOT IN (
+        SELECT author 
+        FROM book
+      );
+
+SELECT * FROM book;
+
+//31.Добавить из таблицы supply в таблицу book, все книги, кроме книг, написанных Булгаковым М.А. и Достоевским Ф.М.
+INSERT INTO book (title, author, price, amount) 
+SELECT title, author, price, amount 
+FROM supply
+WHERE author not in  ('Булгаков М.А.','Достоевский Ф.М.');
+
+//32. Уменьшить на 10% цену тех книг в таблице book, количество которых принадлежит интервалу от 5 до 10, включая границы.
+UPDATE book 
+SET price = 0.9*price 
+WHERE amount BETWEEN 5 AND 10;
+
+SELECT * FROM book;
+
+
+//33. UPDATE book
+SET buy = IF(buy > amount, buy = amount, buy),
+    price = IF(buy = 0, price * 0.9, price * 1);
+   
+SELECT * FROM book;
+//34. В таблице book необходимо скорректировать значение для покупателя в столбце buy таким образом, чтобы оно не превышало количество экземпляров книг, указанных в столбце amount. А цену тех книг, которые покупатель не заказывал, снизить на 10%.
+UPDATE book 
+SET buy = IF (buy>= amount,amount,buy) , 
+price = IF(buy=0, price*0.9, price);
+
+   
+SELECT * FROM book;
+
+//35. Для тех книг в таблице book , которые есть в таблице supply, не только увеличить их количество в таблице book ( увеличить их количество на значение столбца amountтаблицы supply), но и пересчитать их цену (для каждой книги найти сумму цен из таблиц book и supply и разделить на 2).
+UPDATE book, supply 
+SET book.amount = book.amount + supply.amount,
+book.price= (book.price + supply.price)/2
+WHERE book.title = supply.title
+AND book.author = supply.author;
+SELECT * FROM book;
+
+
+//36. Удалить из таблицы supply книги тех авторов, общее количество экземпляров книг которых в таблице book превышает 10.
+
+DELETE FROM supply 
+WHERE author IN (
+SELECT author 
+FROM book
+GROUP BY author
+ HAVING SUM(amount)>10);
+
+
+SELECT * FROM supply;
+//37. Создать таблицу заказ (ordering), куда включить авторов и названия тех книг, количество экземпляров которых в таблице book меньше среднего количества экземпляров книг в таблице book. В таблицу включить столбец   amount, в котором для всех книг указать одинаковое значение - среднее количество экземпляров книг в таблице book.
+CREATE TABLE ordering AS
+SELECT author, title, 
+   (
+    SELECT ROUND(AVG(amount)) 
+    FROM book
+   ) AS amount
+FROM book
+WHERE amount < (
+    SELECT ROUND(AVG(amount)) 
+    FROM book
+   );
+
+SELECT * FROM ordering;
+
+//38. Создать таблицу заказ (ordering), куда включить авторов и названия тех книг, количество которых в таблице book меньше максимального (15). Для всех книг в таблице ordering указать такое значение, которое позволит выровнять количество книг до максимального в таблице book.
+CREATE TABLE ordering AS
+SELECT author, title,
+(SELECT MAX(amount)
+       FROM book)-amount AS amount 
+       
+ FROM book
+ WHERE amount NOT IN (SELECT MAX(amount) FROM book);
+ 
+SELECT * FROM book;
+SELECT * FROM ordering;
+
+
+//39.
+Вывести из таблицы trip информацию о командировках тех сотрудников, фамилия которых заканчивается на букву «а», в отсортированном по убыванию даты последнего дня командировки виде. В результат включить столбцы name, city, per_diem, date_first, date_last.
+
+SELECT name, city, per_diem, date_first, date_last
+FROM trip
+WHERE name LIKE ('%а _._.')
+ORDER BY date_last DESC;
+
+//40. Вывести в алфавитном порядке фамилии и инициалы тех сотрудников, которые были в командировке в Москве.
+SELECT DISTINCT name 
+FROM trip
+WHERE city = 'Москва'
+ORDER BY name;
+
+
+//41.Для каждого города посчитать, сколько раз сотрудники в нем были.  Информацию вывести в отсортированном в алфавитном порядке по названию городов. Вычисляемый столбец назвать Количество. 
+SELECT city,
+COUNT(city) AS Количество 
+FROM trip
+GROUP BY city
+ORDER BY city;
+
+//42.Вывести два города, в которых чаще всего были в командировках сотрудники. Вычисляемый столбец назвать Количество.
+SELECT city, 
+COUNT(name) AS Количество
+FROM trip
+GROUP BY city
+ORDER BY Количество desc
+LIMIT 2;
+
+//43. Вывести информацию о командировках во все города кроме Москвы и Санкт-Петербурга (фамилии и инициалы сотрудников, город ,  длительность командировки в днях, при этом первый и последний день относится к периоду командировки). Последний столбец назвать Длительность. Информацию вывести в упорядоченном по убыванию длительности поездки, а потом по убыванию названий городов (в обратном алфавитном порядке).
+SELECT name, city,
+DATEDIFF(date_last, date_first)+1 AS 'Длительность'
+FROM trip
+WHERE city NOT IN ('Москва','Санкт-Петербург')
+ORDER BY 3 DESC, 2 desc
+//44. Вывести информацию о командировках сотрудника(ов), которые были самыми короткими по времени. В результат включить столбцы name, city, date_first, date_last.
+SELECT name, city, date_first, date_last 
+FROM trip
+WHERE DATEDIFF(date_last, date_first) IN (SELECT MIN(DATEDIFF(date_last, date_first)) FROM trip) 
+
+
+//45.
+SELECT name, city, date_first, date_last
+FROM trip
+WHERE MONTH(date_first)=MONTH(date_last)
+ORDER BY city, name
+
+
+//46. Вывести название месяца и количество командировок для каждого месяца. Считаем, что командировка относится к некоторому месяцу, если она началась в этом месяце. Информацию вывести сначала в отсортированном по убыванию количества, а потом в алфавитном порядке по названию месяца виде. Название столбцов – Месяц и Количество.
+SELECT MONTHNAME(date_first) AS Месяц,
+COUNt(MONTHNAME(date_first)) AS Количество
+FROM trip
+GROUP BY Месяц
+ORDER BY  2 desc , 1;
+
+
+//47. Вывести сумму суточных (произведение количества дней командировки и размера суточных) для командировок, первый день которых пришелся на февраль или март 2020 года. Значение суточных для каждой командировки занесено в столбец per_diem. Вывести фамилию и инициалы сотрудника, город, первый день командировки и сумму суточных. Последний столбец назвать Сумма. Информацию отсортировать сначала  в алфавитном порядке по фамилиям сотрудников, а затем по убыванию суммы суточных.
+SELECT  name, city, date_first,
+per_diem*(DATEDIFF(date_last,date_first)+1) AS Сумма
+FROM trip
+WHERE YEAR(date_first)=2020 and MONTH(date_first)=3 OR MONTH(date_first)=2
+ORDER BY name,Сумма DESC;
+
+//48.Вывести фамилию с инициалами и общую сумму суточных, полученных за все командировки для тех сотрудников, которые были в командировках больше чем 3 раза, в отсортированном по убыванию сумм суточных виде. Последний столбец назвать Сумма.
+SELECT name, 
+SUM((DATEDIFF(date_last, date_first) + 1) * per_diem) AS Сумма
+FROM trip
+WHERE name IN
+(SELECT name
+FROM trip
+GROUP BY name HAVING COUNT(name) > 3)
+ GROUP BY name
+ORDER BY 2 DESC;
+
+
+
+//49. CREATE TABLE fine(
+    fine_id int primary key auto_increment,
+    name VARCHAR(30),
+    number_plate VARCHAR(6),
+    violation VARCHAR(50),
+    sum_fine DECIMAL(8,2),
+    date_violation date,
+    date_payment date );
+
+
+//50. INSERT INTO fine (name, number_plate, violation, sum_fine, date_violation, date_payment)
+VALUES ('Баранов П.Е.', 'Р523ВТ', 'Превышение скорости(от 40 до 60)',NULL,'2020-02-14', NULL),
+       ('Абрамова К.А.', 'О111АВ','Проезд на запрещающий сигнал', NULL, '2020-02-23', NULL),
+       ('Яковлев Г.Р.', 'Т330ТТ', 'Проезд на запрещающий сигнал', NULL, '2020-03-03', NULL);
+
+
+
+//51. Занести в таблицу fine суммы штрафов, которые должен оплатить водитель, в соответствии с данными из таблицы traffic_violation. При этом суммы заносить только в пустые поля столбца  sum_fine.
+
+UPDATE fine, traffic_violation AS tv
+SET fine.sum_fine=tv.sum_fine
+WHERE (fine.sum_fine IS NULL) AND fine.violation=tv.violation;
+
+SELECT * FROM fine
       
        --1. Вывести всех работников чьи зарплаты есть в базе, вместе с зарплатами.
 select * from employees;
